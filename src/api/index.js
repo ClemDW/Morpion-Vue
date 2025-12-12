@@ -5,5 +5,3 @@ export const headers = {
     'Content-type': 'application/json',
     'Authorization': `key=${config.API_KEY}`
 }
-
-export { baseURL, headers }

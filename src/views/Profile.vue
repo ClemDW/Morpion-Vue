@@ -27,7 +27,7 @@ export default {
 
         return {
             User,
-            updateUser
+            updateUser,
         }
     },
 
@@ -55,8 +55,8 @@ export default {
 <template>
     <h1>Profil</h1>
     <h3>Modifier le nom</h3>
-    <input type="text" v-model="User.uname" :placeholder="User.uname">
+    <input type="text" :value="User.uname">
     <h3>Modifier l'adresse mail</h3>
-    <input type="email" v-model="User.email" :placeholder="User.email">
+    <input type="email" :value="User.email">
     <button @click="updateUser">Modifier</button>
 </template>
