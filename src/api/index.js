@@ -1,7 +1,7 @@
-import API_KEY from '../.env'
+import config from './config.js'
 
-const baseURL = "https://https://morpion-api.edu.netlor.fr"
-const headers = {
+export const baseURL = "https://morpion-api.edu.netlor.fr"
+export const headers = {
     'Content-type': 'application/json',
-    'Authorization': 'key=[${API_KEY}]'
+    'Authorization': `key=${config.API_KEY}`
 }
