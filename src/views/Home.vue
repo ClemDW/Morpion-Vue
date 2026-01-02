@@ -9,6 +9,8 @@ export default {
             axios.post(baseURL + '/api/games', {}, { headers })
                 .then((response) => {
                     console.log("Partie créée : ", response.data);
+                    sessionStorage.setItem("user_id", response.data.owner.id);
+                    sessionStorage.setItem("user_name", response.data.owner.name);
                     this.$router.push({ name: 'game', params: { id: response.data.id } });
                 })
                 .catch((error) => {
@@ -23,7 +25,7 @@ export default {
 <template>
     <div>
         <nav>
-            <router-link to="/game" @click="createGame">Jouer</router-link>
+            <button @click="createGame">Jouer</button>
             <router-link to="/profile">Editer le profil</router-link>
         </nav>
     </div>
