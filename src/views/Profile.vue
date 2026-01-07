@@ -2,11 +2,12 @@
 import { reactive, ref } from 'vue'
 import { baseURL, headers } from '@/api/index'
 import axios from 'axios'
+import { useRouter } from "vue-router";
 
 export default {
 
     setup() {
-        
+        const router = useRouter();
         const User = reactive({
             id: sessionStorage.getItem("user_id") || "",
             uname: sessionStorage.getItem("user_name") || "",
@@ -20,7 +21,13 @@ export default {
             axios.put(baseURL+"/api/profile", {name: User.uname, email: User.email}, {headers: headers})
             .then((response) => {
                 console.log(response)
+                return axios.get(baseURL + "/api/profile", { headers: headers });
+            })
+            .then((response) => {
+                sessionStorage.setItem("user_id", response.data.id);
+                sessionStorage.setItem("user_name", response.data.name);
                 alert("Profil mis à jour !")
+                router.push("/");
             })
             .catch((error) => {
                 console.log(error)

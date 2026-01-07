@@ -28,6 +28,17 @@ const router = createRouter({
       component: Join
     },
   ],
-})
+});
+
+router.beforeEach((to, from, next) => {
+  const userId = sessionStorage.getItem("user_id");
+  const userName = sessionStorage.getItem("user_name");
+  if ((!userId || !userName) && to.path !== "/profile") {
+    next("/profile");
+  } else {
+    next();
+  }
+});
+
 
 export default router
