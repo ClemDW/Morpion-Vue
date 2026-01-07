@@ -12,23 +12,43 @@ export default {
     };
   },
 
+  computed: {
+    me() {
+      if (!this.game) return null;
+
+      return this.userId === this.game.owner_id
+        ? this.game.owner
+        : this.game.opponent;
+    },
+
+    opponent() {
+      if (!this.game) return null;
+
+      return this.userId === this.game.owner_id
+        ? this.game.opponent
+        : this.game.owner;
+    }
+  },
+
   methods: {
     waitForOpponentMove() {
+      if (!this.game || !this.userId) {
+        console.error("Impossible de lancer le WS");
+        return;
+      }
+
       this.socket = new WebSocket(
-        `wss://morpion-api.edu.netlor.fr/websockets`
+        "wss://morpion-api.edu.netlor.fr/websockets"
       );
 
       this.socket.onopen = () => {
-        console.log("WebSocket connecté");
+        const payload = {
+          action: "connect",
+          game_id: this.game.id,
+          player_id: this.userId
+        };
 
-        // Message de connexion
-        this.socket.send(
-          JSON.stringify({
-            action: "connect",
-            game_id: this.game.id,
-            player_id: this.userId
-          })
-        );
+        this.socket.send(JSON.stringify(payload));
       };
 
       this.socket.onmessage = (event) => {
@@ -64,6 +84,9 @@ export default {
       .then((response) => {
         next((vm) => {
           vm.game = response.data;
+          if (!vm.game.board) {
+            vm.game.board = Array(9).fill(null);
+          }
           vm.waitForOpponentMove();
         });
       })
@@ -86,7 +109,7 @@ export default {
   <div v-if="game">
     <h2>Partie de Morpion</h2>
 
-    <p><strong>Vous :</strong> {{ userName }}</p>
+    <p><strong>Vous :</strong> {{ me?.name }}</p>
     <p><strong>Code de la partie :</strong> {{ game.code }}</p>
 
     <!-- Attente adversaire -->
@@ -96,7 +119,7 @@ export default {
 
     <!-- Partie active -->
     <div v-else>
-      <p><strong>Adversaire :</strong> {{ game.opponent.name }}</p>
+      <p><strong>Adversaire :</strong> {{ opponent?.name }}</p>
 
       <p v-if="game.next_player_id == userId">
         C’est à vous de jouer

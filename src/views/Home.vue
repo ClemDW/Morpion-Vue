@@ -27,6 +27,7 @@ export default {
         <nav>
             <button @click="createGame">Jouer</button>
             <router-link to="/profile">Editer le profil</router-link>
+            <router-link to="join">Rejoindre une partie</router-link>
         </nav>
     </div>
 </template>
