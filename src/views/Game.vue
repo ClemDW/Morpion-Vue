@@ -8,7 +8,8 @@ export default {
       game: null,
       socket: null,
       userId: sessionStorage.getItem("user_id"),
-      userName: sessionStorage.getItem("user_name")
+      userName: sessionStorage.getItem("user_name"),
+      gameOver: false
     };
   },
 
@@ -54,29 +55,50 @@ export default {
       this.socket.onmessage = (event) => {
         const data = JSON.parse(event.data);
         console.log("Message WS :", data);
-
-        switch (data.action) {
-          case "opponent-join":
-            this.game.opponent = data.opponent;
-            break;
-
-          case "opponent-play":
-            this.game.board = data.board;
-            this.game.next_player_id = data.next_player_id;
-            break;
-
-          case "opponent-quit":
-            alert("Votre adversaire a quitté la partie");
-            this.game.opponent = null;
-            break;
-        }
       };
 
       this.socket.onclose = () => {
         console.log("WebSocket fermé");
       };
-    }
+    },
+    play(index) {
+      const row = Math.floor(index / 3) + 1;
+      const col = (index % 3) + 1;
+
+      axios
+        .patch(
+          `${baseURL}/api/games/${this.game.id}/play/${row}/${col}`,
+          {},
+          { headers }
+        )
+        .then((response) => {
+          this.game = response.data;
+          this.game.board = this.normalizeBoard(response.data);
+        })
+        .catch((error) => {
+          console.error(error);
+          alert(
+            error.response?.data?.error ||
+            "Coup invalide (case déjà jouée ?)"
+          );
+        });
+    },
+    goHome() {
+      if (this.socket) {
+        this.socket.close();
+        this.socket = null;
+      }
+      this.$router.push("/");
+    },
+    normalizeBoard(game) {
+      return [
+        game.r1c1, game.r1c2, game.r1c3,
+        game.r2c1, game.r2c2, game.r2c3,
+        game.r3c1, game.r3c2, game.r3c3
+      ];
+    },
   },
+  
 
   beforeRouteEnter(to, from, next) {
     axios
@@ -84,9 +106,7 @@ export default {
       .then((response) => {
         next((vm) => {
           vm.game = response.data;
-          if (!vm.game.board) {
-            vm.game.board = Array(9).fill(null);
-          }
+          vm.game.board = vm.normalizeBoard(response.data);
           vm.waitForOpponentMove();
         });
       })
@@ -128,14 +148,31 @@ export default {
         Au tour de l’adversaire
       </p>
 
-      <!-- Grille -->
-      <div class="grid">
+      <!-- Partie terminée -->
+      <div v-if="game.state === 2">
+        <h3>Partie terminée</h3>
+
+        <p v-if="game.winner_id"> Gagnant : {{ game.winner_id == me.id ? me.name : opponent.name }}</p>
+
+        <p v-else>
+          Match nul
+        </p>
+
+        <button @click="goHome">
+          Retour à l’accueil
+        </button>
+      </div>
+
+      <!-- Partie en cours -->
+      <div v-else class="grid">
         <div
           v-for="(cell, index) in game.board"
           :key="index"
           class="cell"
+          :class="{ disabled: cell || game.next_player_id != userId }"
+          @click="play(index)"
         >
-          {{ cell }}
+          {{ cell === 1 ? 'X' : cell === 2 ? 'O' : '' }}
         </div>
       </div>
     </div>
@@ -158,5 +195,10 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+.cell.disabled {
+  pointer-events: none;
+  background-color: #eee;
 }
 </style>
